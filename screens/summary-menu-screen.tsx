@@ -12,33 +12,20 @@ import {
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-type RootStackParamList = {
-  DetailMenu: { menuId: string };
-  SummaryMenu: undefined;
-};
-type SelectMenuScreenProps = NativeStackNavigationProp<
-  RootStackParamList,
-  "DetailMenu",
-  "SummaryMenu"
->;
 
-const SelectMenuScreen = ({ shopId }: { shopId: string }) => {
+const SummaryMenuScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const restaurants = [
-    { id: "1", name: "เมนู 1", status: true },
-    { id: "2", name: "เมนู 2", status: true },
-    { id: "3", name: "เมนู 3", status: false },
-    { id: "4", name: "เมนู 4", status: true },
+    { id: "1", name: "เมนู 1", price: "100" },
+    { id: "2", name: "เมนู 2", price: "80" },
+    { id: "3", name: "เมนู 3", price: "120" },
+    { id: "4", name: "เมนู 4", price: "120" },
   ];
   const numberOfOrders = 4;
 
   const renderRestaurant = ({ item }) => (
-    <TouchableOpacity
-      style={styles.restaurantItem}
-      onPress={() => navigation.navigate("DetailMenu", { menuId: item.id })}
-    >
+    <TouchableOpacity style={styles.restaurantItem} onPress={() => {}}>
       <View style={{ flexDirection: "row" }}>
         <View style={{ width: 48, height: 48 }}></View>
         <View style={{ gap: 8 }}>
@@ -58,42 +45,27 @@ const SelectMenuScreen = ({ shopId }: { shopId: string }) => {
   const handleConfirm = () => {
     setModalVisible(false);
   };
-  const navigation = useNavigation<SelectMenuScreenProps>();
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView style={{ flex: 1, top: 0 }}>
       <Header
-        title={"ชื่อร้าน"}
+        title={"รายการสั่งซื้อ"}
         showBackButton
-        onBackPress={() => navigation.navigate("SelectShop" as never)}
+        onBackPress={() => navigation.goBack()}
       />
+
       <View style={styles.container}>
-        <Text style={styles.header}>ค้นหาเมนู</Text>
-        <View style={styles.searchContainer}>
-          <TextInput style={styles.searchInput} placeholder="ค้นหาร้านอาหาร" />
-          <TouchableOpacity style={styles.searchIcon}>
-            <Entypo name="magnifying-glass" size={20} color="#888" />
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={restaurants}
-          renderItem={renderRestaurant}
-          keyExtractor={(item) => item.id}
-        />
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <TouchableOpacity
-            style={{ justifyContent: "center", alignSelf: "center" }}
-            onPress={() => navigation.navigate("SummaryMenu")}
-          >
-            {numberOfOrders !== 0 && (
-              <View style={styles.orderContainer}>
-                <Text style={styles.orderCount}>{numberOfOrders}</Text>
-              </View>
-            )}
-
-            <Entypo name="shopping-basket" size={48} color="black" />
-          </TouchableOpacity>
-
+        {restaurants ? (
+          <FlatList
+            data={restaurants}
+            renderItem={renderRestaurant}
+            keyExtractor={(item) => item.id}
+          />
+        ) : (
+          <Text>รายการว่างเปล่า</Text>
+        )}
+        <View style={{ flexDirection: "row", justifyContent: "center" }}>
           <View>
             <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
               <TouchableOpacity
@@ -264,4 +236,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SelectMenuScreen;
+export default SummaryMenuScreen;

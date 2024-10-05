@@ -7,10 +7,22 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  SafeAreaView,
 } from "react-native";
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+type RootStackParamList = {
+  SelectMenu: { shopId: string };
+  SummaryMenu: undefined;
+};
+type SelectMenuScreenProps = NativeStackNavigationProp<
+  RootStackParamList,
+  "SelectMenu",
+  "SummaryMenu"
+>;
 
 const SelectShopScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -22,7 +34,7 @@ const SelectShopScreen = () => {
     { id: "4", name: "ร้านที่ 4", status: true },
   ];
   const numberOfOrders = 4;
-  const navigation = useNavigation();
+  const navigation = useNavigation<SelectMenuScreenProps>();
 
   const renderRestaurant = ({ item }) => (
     <TouchableOpacity
@@ -54,7 +66,7 @@ const SelectShopScreen = () => {
   );
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, top: 0 }}>
       <Header
         title={"กรุณาเลือกร้านอาหาร"}
         showBackButton
@@ -81,6 +93,7 @@ const SelectShopScreen = () => {
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <TouchableOpacity
             style={{ justifyContent: "center", alignSelf: "center" }}
+            onPress={() => navigation.navigate("SummaryMenu")}
           >
             {numberOfOrders !== 0 && (
               <View style={styles.orderContainer}>
@@ -142,7 +155,7 @@ const SelectShopScreen = () => {
           </View>
         </Modal>
       </View>
-    </>
+    </SafeAreaView>
   );
 };
 
