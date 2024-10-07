@@ -1,121 +1,94 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Modal,
   SafeAreaView,
+  Image,
 } from "react-native";
 import Header from "../components/header";
-import Entypo from "@expo/vector-icons/Entypo";
+import useOrderStore from "../OrderStore"; // Ensure this path is correct
 import { useNavigation } from "@react-navigation/native";
-import useOrderStore from "../OrderStore";
 
 const SummaryMenuScreen = () => {
-  const [modalVisible, setModalVisible] = useState(false);
+  const order = useOrderStore((state) => state.order);
+
+  const handleDeleteOrderItem = (orderId) => {
+    useOrderStore.getState().removeOrderItem(orderId);
+  };
   const navigation = useNavigation();
 
-  // Accessing the order from the store
-  const order = useOrderStore((state) => state.order);
-  console.log("order", order);
-
-  // Function to render each order item
-  const renderOrderItem = ({ item }) => (
-    <TouchableOpacity style={styles.restaurantItem} onPress={() => {}}>
-      <View style={{ flexDirection: "row" }}>
-        <View style={{ width: 48, height: 48 }}></View>
-        <View style={{ gap: 8 }}>
-          <Text style={styles.restaurantName}>{item.menuId}</Text>
-          {/* Assuming menuId is the identifier */}
-          <TouchableOpacity>
-            <Text style={{ fontSize: 14, color: "#5685FF" }}>ดูรีวิว</Text>
-          </TouchableOpacity>
-        </View>
+  const renderOrderItem = ({ item }) => {
+    return (
+      <View style={styles.restaurantItem}>
+        <TouchableOpacity onPress={() => {}}>
+          <View style={{ flexDirection: "row" }}>
+            {item?.picture && (
+              <Image
+                source={{ uri: item.picture }}
+                style={{ width: 48, height: 48 }}
+              />
+            )}
+            <View style={{ marginLeft: 10 }}>
+              <Text style={styles.restaurantName}>
+                {item?.name || "Menu not found"}
+              </Text>
+              <Text style={styles.restaurantStatus}>
+                จำนวน: {item.quantity}
+              </Text>
+              <Text style={styles.restaurantStatus}>
+                ราคาต่อหน่วย: {item?.price}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleDeleteOrderItem(item.orderId)}>
+          <Text style={styles.deleteButton}>Delete</Text>
+        </TouchableOpacity>
       </View>
-      <Text style={styles.restaurantStatus}>จำนวน: {item.quantity}</Text>
-    </TouchableOpacity>
-  );
-
-  const handleConfirm = () => {
-    // Logic to handle confirmation (e.g., reset order)
-    setModalVisible(false);
+    );
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, top: 0 }}>
+    <SafeAreaView style={styles.container}>
       <Header
         title={"รายการสั่งซื้อ"}
         showBackButton
         onBackPress={() => navigation.goBack()}
       />
-
-      <View style={styles.container}>
-        {order.orderItems.length > 0 ? (
+      <View style={{ padding: 32 }}>
+        {order.orderItems.length === 0 ? (
+          <View style={{ justifyContent: "center", alignSelf: "center" }}>
+            <Text>รายการว่างเปล่า</Text>
+          </View>
+        ) : (
           <FlatList
             data={order.orderItems}
             renderItem={renderOrderItem}
-            keyExtractor={(item) => item.menuId.toString()} // Ensure keyExtractor is correct
+            keyExtractor={(item) => item.menuId}
+            contentContainerStyle={{ flexGrow: 1 }}
           />
-        ) : (
-          <Text>รายการว่างเปล่า</Text>
         )}
+      </View>
 
-        <View style={{ flexDirection: "row", justifyContent: "center" }}>
-          <View>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-              <TouchableOpacity
-                style={[
-                  styles.orderButton,
-                  order.orderItems.length !== 0 && {
-                    backgroundColor: "#2C2C2C",
-                  },
-                ]}
-                onPress={() => navigation.navigate("ConfirmOrder" as never)}
-              >
-                <Text style={styles.buttonText}>สั่ง</Text>
-              </TouchableOpacity>
-            </View>
-
-            {order.orderItems.length === 0 && (
-              <Text style={styles.footerNote}>
-                *กรุณาต้องการรออาหารโดยใส่จำนวน
-              </Text>
-            )}
-          </View>
-        </View>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(!modalVisible);
-          }}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[
+            styles.orderButton,
+            order.orderItems.length !== 0 && {
+              backgroundColor: "#2C2C2C",
+            },
+          ]}
+          disabled={order.orderItems.length === 0}
+          onPress={() => navigation.navigate("ConfirmOrder" as never)}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Entypo name="warning" size={64} color="#E6273E" />
-              <Text style={styles.modalTitle}>ต้องการเลือกโรงอาหารอื่น?</Text>
-              <Text style={styles.modalMessage}>
-                หากคุณเลือกโรงอาหารใหม่ ข้อมูลที่สั่งไว้จะถูกล้าง
-              </Text>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleConfirm}
-              >
-                <Text style={styles.buttonText}>เลือกโรงอาหารอื่น</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>ยกเลิก</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+          <Text style={styles.buttonText}>สั่ง</Text>
+        </TouchableOpacity>
+        {order.orderItems.length === 0 && (
+          <Text style={styles.footerNote}>*กรุณาต้องการรออาหารโดยใส่จำนวน</Text>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -124,7 +97,6 @@ const SummaryMenuScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 32,
     backgroundColor: "#fff",
   },
   restaurantItem: {
@@ -148,53 +120,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
   },
+  deleteButton: {
+    color: "red",
+    fontSize: 16,
+  },
   buttonText: {
     fontSize: 18,
     color: "white",
+  },
+  footer: {
+    padding: 16,
+    alignItems: "center",
   },
   footerNote: {
     marginTop: 10,
     textAlign: "center",
     fontSize: 14,
     color: "red",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "80%",
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  modalMessage: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  confirmButton: {
-    backgroundColor: "#f00",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    width: "100%",
-    marginBottom: 10,
-  },
-  cancelButton: {
-    backgroundColor: "#ccc",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    width: "100%",
   },
 });
 

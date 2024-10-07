@@ -68,6 +68,7 @@ const SelectMenuScreen = ({ route }: Props) => {
       onPress={() =>
         navigation.navigate("DetailMenu", { menuId: item.menuId.toString() })
       }
+      disabled={!item.status}
     >
       <View style={{ flexDirection: "row" }}>
         <View style={{ width: 48, height: 48, marginRight: 16 }}>
@@ -89,12 +90,13 @@ const SelectMenuScreen = ({ route }: Props) => {
         </View>
         <View style={{ gap: 8 }}>
           <Text style={styles.restaurantName}>{item.name}</Text>
-          <Text style={styles.restaurantPrice}>ราคา: {item.price} บาท</Text>
+          {item.status ? (
+            <Text style={styles.restaurantStatus}>ราคา: {item.price} บาท</Text>
+          ) : (
+            <Text style={[styles.restaurantStatus, { color: "red" }]}>หมด</Text>
+          )}
         </View>
       </View>
-      <Text style={[styles.restaurantStatus, !item.status && { color: "red" }]}>
-        {item.status ? "เปิด" : "ปิด"}
-      </Text>
     </TouchableOpacity>
   );
 
@@ -103,7 +105,7 @@ const SelectMenuScreen = ({ route }: Props) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, top: 0 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white", top: 0 }}>
       <Header
         title={"ชื่อร้าน"}
         showBackButton
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
   },
   restaurantStatus: {
     fontSize: 16,
-    color: "green",
+    color: "black",
   },
   orderButton: {
     right: 0,

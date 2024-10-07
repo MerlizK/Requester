@@ -6,17 +6,24 @@ import {
   StyleSheet,
   Modal,
   SafeAreaView,
+  Alert, // Import Alert for confirmation dialog
 } from "react-native";
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
+import useOrderStore from "../OrderStore";
+import axios from "axios";
+import { APIURL, HeadersToken } from "../Constants";
 
 const ConfirmOrderScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState("123 ถนน ที่อยู่");
   const [useGPS, setUseGPS] = useState(false);
-
   const navigation = useNavigation();
+
+  const order = useOrderStore((state) => state.order);
+  const sendOrderPayload = useOrderStore((state) => state.sendOrderPayload);
+  const updateOrderDetails = useOrderStore((state) => state.updateOrderDetails);
 
   const handleConfirmAddress = (gps: boolean) => {
     setUseGPS(gps);
@@ -24,8 +31,39 @@ const ConfirmOrderScreen = () => {
     setModalVisible(false);
   };
 
+  const handleConfirmOrder = async () => {
+    updateOrderDetails({
+      addressId: 2,
+      transactionType: "Debit-card",
+      totalPrice: 60,
+      shippingFee: 10,
+      amount: 70,
+    });
+    const payload = sendOrderPayload();
+
+    console.log(
+      "Payload being sent to the API:",
+      JSON.stringify(payload, null, 2)
+    );
+
+    try {
+      const response = await axios.post(`${APIURL}requester/create-order`, {
+        body: payload,
+        ...HeadersToken,
+      });
+      console.log("API response:", response.data);
+      setMenus(response.data);
+    } catch (error) {
+      console.error(
+        "Order submission error:",
+        error.response ? error.response.data : error.message
+      );
+      Alert.alert("Error", "An unexpected error occurred.");
+    }
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header
         title={"ยืนยันการสั่งซื้อ"}
         showBackButton
@@ -48,19 +86,28 @@ const ConfirmOrderScreen = () => {
 
         <View style={styles.orderDetails}>
           <Text style={styles.headerText}>รายการที่สั่ง</Text>
-          <Text>ร้านที่1</Text>
-          <Text>เมนูที่1 80.00 บาท</Text>
-          <Text>จำนวน 2</Text>
-          <Text>เพิ่มเติม: ไม่เอาเครื่องใน</Text>
+          {order.orderItems.map((item, index) => (
+            <View key={index}>
+              <Text>{item.name}</Text>
+              <Text>{`ราคา: ${item.totalPrice.toFixed(2)} บาท`}</Text>
+              <Text>{`จำนวน: ${item.quantity}`}</Text>
+              {item.specialInstructions && (
+                <Text>{`เพิ่มเติม: ${item.specialInstructions}`}</Text>
+              )}
+            </View>
+          ))}
         </View>
 
         <View style={styles.priceDetails}>
-          <Text>ราคาอาหารรวม 80.00 บาท</Text>
-          <Text>ราคาจัดส่ง 15.00 บาท</Text>
-          <Text>ราคาทั้งหมด 95.00 บาท</Text>
+          <Text>ราคาอาหารรวม {order.totalPrice.toFixed(2)} บาท</Text>
+          <Text>ราคาจัดส่ง {order.shippingFee.toFixed(2)} บาท</Text>
+          <Text>ราคาทั้งหมด {order.amount.toFixed(2)} บาท</Text>
         </View>
 
-        <TouchableOpacity style={styles.confirmButton}>
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirmOrder}
+        >
           <Text style={styles.confirmButtonText}>ยืนยัน</Text>
         </TouchableOpacity>
 
@@ -105,7 +152,7 @@ const ConfirmOrderScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 32,
     backgroundColor: "#fff",
   },
   orderDetails: {
@@ -178,3 +225,6 @@ const styles = StyleSheet.create({
 });
 
 export default ConfirmOrderScreen;
+function setMenus(data: any) {
+  throw new Error("Function not implemented.");
+}

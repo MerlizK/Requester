@@ -49,10 +49,8 @@ const SelectShopScreen = () => {
       console.error("Error fetching shops:", error);
     }
   };
-
-  // Set the canteenId when the component mounts
   useEffect(() => {
-    updateOrderDetails({ canteenId: 1 }); // Set canteenId to 1 (or any ID you want)
+    updateOrderDetails({ canteenId: 1 });
     fetchShops();
   }, []);
 
@@ -62,6 +60,7 @@ const SelectShopScreen = () => {
       onPress={() => {
         navigation.navigate("SelectMenu", { shopId: item.shopId });
       }}
+      disabled={!item.status}
     >
       <View style={{ flexDirection: "row" }}>
         <Image
@@ -92,7 +91,7 @@ const SelectShopScreen = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, top: 0 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white", top: 0 }}>
       <Header
         title={"กรุณาเลือกร้านอาหาร"}
         showBackButton

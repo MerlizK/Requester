@@ -14,7 +14,7 @@ import { RouteProp, useNavigation } from "@react-navigation/native";
 import CustomCheckboxPrice from "../components/checkbox-price";
 import { Entypo } from "@expo/vector-icons";
 import axios from "axios";
-import useOrderStore from "../OrderStore";
+import useOrderStore from "../OrderStore"; // Ensure this imports correctly
 import { APIURL, HeadersToken } from "../Constants";
 
 interface OptionItem {
@@ -61,22 +61,22 @@ const DetailMenuScreen = ({ route }: Props) => {
   const [specialInstructions, setSpecialInstructions] = useState<string>("");
 
   const { menuId } = route.params;
+  const numericMenuId = Number(menuId);
   const addOrderItem = useOrderStore((state) => state.addOrderItem); // Correctly accessing the addOrderItem function
   const navigation = useNavigation();
-
+  const order = useOrderStore((state) => state.order);
+  const fetchMenuData = async () => {
+    try {
+      const response = await axios.get(`${APIURL}shop/menu/info`, {
+        params: { menuId: menuId },
+        ...HeadersToken,
+      });
+      setMenuData(response.data);
+    } catch (error) {
+      console.error("Error fetching menu details", error);
+    }
+  };
   useEffect(() => {
-    const fetchMenuData = async () => {
-      try {
-        const response = await axios.get(`${APIURL}shop/menu/info`, {
-          params: { menuId: menuId },
-          ...HeadersToken,
-        });
-        setMenuData(response.data);
-      } catch (error) {
-        console.error("Error fetching menu details", error);
-      }
-    };
-
     fetchMenuData();
   }, [menuId]);
 
@@ -132,15 +132,16 @@ const DetailMenuScreen = ({ route }: Props) => {
     );
 
     const orderItem = {
-      shopId: 1, // Replace with actual shopId if necessary
+      shopId: 1,
       quantity: quantity,
       totalPrice: calculateTotalPrice(),
       specialInstructions: specialInstructions,
-      menuId: menuId,
-      orderItemExtras: orderItemExtras, // Flattened array of selected options
+      menuId: numericMenuId,
+      orderItemExtras: orderItemExtras,
+      picture: menuData?.picture || "",
+      name: menuData?.name || "",
+      orderId: (order.orderItems.length + 1).toString(),
     };
-
-    // Add the order item to the store
     addOrderItem(orderItem);
 
     // Optionally, you can update the order details as well here
@@ -294,10 +295,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#fff",
-    paddingTop: 0,
-    paddingBottom: 16,
-    paddingHorizontal: 32,
+    backgroundColor: "white",
+    padding: 16,
   },
 });
 

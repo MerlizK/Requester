@@ -12,6 +12,9 @@ interface OrderItem {
   specialInstructions?: string;
   menuId: number;
   orderItemExtras: OrderItemExtra[];
+  picture: string;
+  name: string;
+  orderId: string;
 }
 
 interface Order {
@@ -28,9 +31,10 @@ interface Order {
 interface OrderStore {
   order: Order;
   addOrderItem: (orderItem: OrderItem) => void;
-  removeOrderItem: (menuId: number) => void;
+  removeOrderItem: (orderId: string) => void;
   clearOrder: () => void;
   updateOrderDetails: (details: Partial<Order>) => void;
+  sendOrderPayload: () => Order;
 }
 
 const useOrderStore = create<OrderStore>((set) => ({
@@ -56,12 +60,12 @@ const useOrderStore = create<OrderStore>((set) => ({
     })),
 
   // Remove an order item by menuId
-  removeOrderItem: (menuId) =>
+  removeOrderItem: (orderId) =>
     set((state) => ({
       order: {
         ...state.order,
         orderItems: state.order.orderItems.filter(
-          (item) => item.menuId !== menuId
+          (item) => item.orderId !== orderId
         ),
       },
     })),
@@ -89,6 +93,26 @@ const useOrderStore = create<OrderStore>((set) => ({
         ...details,
       },
     })),
+
+  sendOrderPayload: () => {
+    const { order } = useOrderStore.getState();
+    const payload = {
+      canteenId: order.canteenId,
+      addressId: order.addressId,
+      totalPrice: order.totalPrice,
+      shippingFee: order.shippingFee,
+      amount: order.amount,
+      transactionType: order.transactionType,
+      transactionDate: order.transactionDate,
+      orderItems: order.orderItems.map(
+        ({ picture, name, orderId, ...rest }) => ({
+          ...rest,
+        })
+      ),
+    };
+
+    return payload;
+  },
 }));
 
 export default useOrderStore;
