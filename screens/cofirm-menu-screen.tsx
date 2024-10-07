@@ -24,7 +24,7 @@ const ConfirmOrderScreen = () => {
   const order = useOrderStore((state) => state.order);
   const sendOrderPayload = useOrderStore((state) => state.sendOrderPayload);
   const updateOrderDetails = useOrderStore((state) => state.updateOrderDetails);
-
+  const clearOrder = useOrderStore((state) => state.clearOrder);
   const handleConfirmAddress = (gps: boolean) => {
     setUseGPS(gps);
     setDeliveryAddress(gps ? "ตามที่อยู่บนระบบ GPS" : "123 ถนน ที่อยู่");
@@ -47,12 +47,16 @@ const ConfirmOrderScreen = () => {
     );
 
     try {
-      const response = await axios.post(`${APIURL}requester/create-order`, {
-        body: payload,
-        ...HeadersToken,
-      });
+      const response = await axios.post(
+        `${APIURL}requester/create-order`,
+        payload,
+        {
+          ...HeadersToken,
+        }
+      );
       console.log("API response:", response.data);
-      setMenus(response.data);
+      clearOrder();
+      navigation.navigate("SelectShop" as never);
     } catch (error) {
       console.error(
         "Order submission error:",
@@ -225,6 +229,3 @@ const styles = StyleSheet.create({
 });
 
 export default ConfirmOrderScreen;
-function setMenus(data: any) {
-  throw new Error("Function not implemented.");
-}
