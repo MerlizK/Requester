@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   FlatList,
   TouchableOpacity,
   StyleSheet,
@@ -12,40 +11,37 @@ import {
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
+import useOrderStore from "../OrderStore";
 
 const SummaryMenuScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
+  const navigation = useNavigation();
 
-  const restaurants = [
-    { id: "1", name: "เมนู 1", price: "100" },
-    { id: "2", name: "เมนู 2", price: "80" },
-    { id: "3", name: "เมนู 3", price: "120" },
-    { id: "4", name: "เมนู 4", price: "120" },
-  ];
-  const numberOfOrders = 4;
+  // Accessing the order from the store
+  const order = useOrderStore((state) => state.order);
+  console.log("order", order);
 
-  const renderRestaurant = ({ item }) => (
+  // Function to render each order item
+  const renderOrderItem = ({ item }) => (
     <TouchableOpacity style={styles.restaurantItem} onPress={() => {}}>
       <View style={{ flexDirection: "row" }}>
         <View style={{ width: 48, height: 48 }}></View>
         <View style={{ gap: 8 }}>
-          <Text style={styles.restaurantName}>{item.name}</Text>
+          <Text style={styles.restaurantName}>{item.menuId}</Text>
+          {/* Assuming menuId is the identifier */}
           <TouchableOpacity>
             <Text style={{ fontSize: 14, color: "#5685FF" }}>ดูรีวิว</Text>
           </TouchableOpacity>
         </View>
       </View>
-
-      <Text style={[styles.restaurantStatus, !item.status && { color: "red" }]}>
-        {item.status ? "เปิด" : "ปิด"}
-      </Text>
+      <Text style={styles.restaurantStatus}>จำนวน: {item.quantity}</Text>
     </TouchableOpacity>
   );
 
   const handleConfirm = () => {
+    // Logic to handle confirmation (e.g., reset order)
     setModalVisible(false);
   };
-  const navigation = useNavigation();
 
   return (
     <SafeAreaView style={{ flex: 1, top: 0 }}>
@@ -56,29 +52,33 @@ const SummaryMenuScreen = () => {
       />
 
       <View style={styles.container}>
-        {restaurants ? (
+        {order.orderItems.length > 0 ? (
           <FlatList
-            data={restaurants}
-            renderItem={renderRestaurant}
-            keyExtractor={(item) => item.id}
+            data={order.orderItems}
+            renderItem={renderOrderItem}
+            keyExtractor={(item) => item.menuId.toString()} // Ensure keyExtractor is correct
           />
         ) : (
           <Text>รายการว่างเปล่า</Text>
         )}
+
         <View style={{ flexDirection: "row", justifyContent: "center" }}>
           <View>
             <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
               <TouchableOpacity
                 style={[
                   styles.orderButton,
-                  numberOfOrders !== 0 && { backgroundColor: "#2C2C2C" },
+                  order.orderItems.length !== 0 && {
+                    backgroundColor: "#2C2C2C",
+                  },
                 ]}
+                onPress={() => navigation.navigate("ConfirmOrder" as never)}
               >
                 <Text style={styles.buttonText}>สั่ง</Text>
               </TouchableOpacity>
             </View>
 
-            {numberOfOrders === 0 && (
+            {order.orderItems.length === 0 && (
               <Text style={styles.footerNote}>
                 *กรุณาต้องการรออาหารโดยใส่จำนวน
               </Text>
@@ -127,43 +127,6 @@ const styles = StyleSheet.create({
     padding: 32,
     backgroundColor: "#fff",
   },
-  header: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  searchContainer: {
-    position: "relative",
-    marginBottom: 20,
-  },
-  searchInput: {
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingRight: 40,
-  },
-  searchIcon: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-  },
-  orderContainer: {
-    borderRadius: 16,
-    width: 24,
-    height: 24,
-    position: "absolute",
-    top: 0,
-    right: 0,
-    fontSize: 16,
-    backgroundColor: "green",
-    zIndex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  orderCount: {
-    color: "white",
-  },
   restaurantItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -178,7 +141,6 @@ const styles = StyleSheet.create({
     color: "green",
   },
   orderButton: {
-    right: 0,
     width: 160,
     backgroundColor: "#ccc",
     padding: 15,

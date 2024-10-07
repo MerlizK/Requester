@@ -15,7 +15,7 @@ import ForgotPasswordModal from "../components/forgot-modal";
 import LoadingScreen from "../components/loading";
 import axios from "axios";
 import { APIURL } from "../Constants";
-import useShopStore from "../ShopStore";
+// import useShopStore from "../ShopStore";
 
 const LoginScreen = () => {
   const [username, setUsername] = useState("");
@@ -23,7 +23,7 @@ const LoginScreen = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
-  const { setToken } = useShopStore();
+  // const { setToken } = useShopStore();
 
   // const handleLogin = async () => {
   //   setIsLoading(true);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,63 +10,90 @@ import {
   SafeAreaView,
 } from "react-native";
 import Header from "../components/header";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation } from "@react-navigation/native";
 import CustomCheckboxPrice from "../components/checkbox-price";
+import { Entypo } from "@expo/vector-icons";
+import axios from "axios";
+import useOrderStore from "../OrderStore";
+import { APIURL, HeadersToken } from "../Constants";
 
-const DetailMenuScreen = ({ menuId }: { menuId: string }) => {
+interface OptionItem {
+  optionItemId: number;
+  name: string;
+  price: number;
+}
+
+interface Option {
+  optionId: number;
+  name: string;
+  mustChoose: boolean;
+  maxChoose: number;
+  minChoose: number;
+  optionItem: OptionItem[];
+}
+
+interface MenuData {
+  menuId: number;
+  name: string;
+  price: number;
+  picture: string;
+  description: string;
+  status: boolean;
+  option: Option[];
+}
+
+type RootStackParamList = {
+  DetailMenu: { menuId: number };
+  SummaryMenu: undefined;
+  SelectMenu: { shopId: number };
+};
+
+type Props = {
+  route: RouteProp<RootStackParamList, "DetailMenu">; // Route prop type
+};
+
+const DetailMenuScreen = ({ route }: Props) => {
+  const [menuData, setMenuData] = useState<MenuData | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<{
-    [key: string]: number[];
+    [key: number]: number[];
   }>({});
+  const [specialInstructions, setSpecialInstructions] = useState<string>("");
+
+  const { menuId } = route.params;
+  const addOrderItem = useOrderStore((state) => state.addOrderItem); // Correctly accessing the addOrderItem function
   const navigation = useNavigation();
 
-  const menuData = {
-    price: 30,
-    description:
-      "คุณยายกินลำไย น้ำลายยายไหลฮ้อย เฒ่าผาดผัดฟัก เยียฟาดฟักผัด กินมันติดเหงือก กินเผือกติดฟัน",
-    image: "https://example.com/your-food-image.jpg",
-    options: [
-      {
-        id: 1,
-        name: "Option1",
-        minSelect: 1,
-        maxSelect: 1,
-        required: true,
-        subOptions: [
-          { id: 1, name: "เอเอเอ", price: 10 },
-          { id: 2, name: "บีบีบี", price: 10 },
-          { id: 3, name: "ซีซีซี", price: 10 },
-        ],
-      },
-      {
-        id: 2,
-        name: "Option2",
-        minSelect: 1,
-        maxSelect: 2,
-        required: false,
-        subOptions: [
-          { id: 1, name: "aaa", price: 20 },
-          { id: 2, name: "bbb", price: 10 },
-          { id: 3, name: "ccc", price: 20 },
-        ],
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchMenuData = async () => {
+      try {
+        const response = await axios.get(`${APIURL}shop/menu/info`, {
+          params: { menuId: menuId },
+          ...HeadersToken,
+        });
+        setMenuData(response.data);
+      } catch (error) {
+        console.error("Error fetching menu details", error);
+      }
+    };
 
-  const handleSelectOption = (optionId: number, subOptionId: number) => {
+    fetchMenuData();
+  }, [menuId]);
+
+  const handleSelectOption = (optionId: number, optionItemId: number) => {
     setSelectedOptions((prevSelected) => {
       const selected = prevSelected[optionId] || [];
-      if (selected.includes(subOptionId)) {
+      if (selected.includes(optionItemId)) {
         return {
           ...prevSelected,
-          [optionId]: selected.filter((id) => id !== subOptionId),
+          [optionId]: selected.filter((id) => id !== optionItemId),
         };
       }
-      if (
-        selected.length <
-        menuData.options.find((o) => o.id === optionId)?.maxSelect!
-      ) {
-        return { ...prevSelected, [optionId]: [...selected, subOptionId] };
+      const maxChoose =
+        menuData?.option.find((opt) => opt.optionId === optionId)?.maxChoose ||
+        1;
+      if (selected.length < maxChoose) {
+        return { ...prevSelected, [optionId]: [...selected, optionItemId] };
       }
       return prevSelected;
     });
@@ -74,46 +101,87 @@ const DetailMenuScreen = ({ menuId }: { menuId: string }) => {
 
   const calculateTotalPrice = () => {
     let optionPrice = 0;
-    for (const optionId in selectedOptions) {
-      const option = menuData.options.find(
-        (opt) => opt.id === parseInt(optionId)
-      );
-      if (option) {
-        optionPrice += selectedOptions[optionId].reduce((sum, subOptionId) => {
-          const subOption = option.subOptions.find(
-            (so) => so.id === subOptionId
+    if (menuData) {
+      for (const optionId in selectedOptions) {
+        const option = menuData.option.find(
+          (opt) => opt.optionId === parseInt(optionId)
+        );
+        if (option) {
+          optionPrice += selectedOptions[optionId].reduce(
+            (sum, optionItemId) => {
+              const optionItem = option.optionItem.find(
+                (item) => item.optionItemId === optionItemId
+              );
+              return sum + (optionItem ? optionItem.price : 0);
+            },
+            0
           );
-          return sum + (subOption ? subOption.price : 0);
-        }, 0);
+        }
       }
+      return (menuData.price + optionPrice) * quantity;
     }
-    return (menuData.price + optionPrice) * quantity;
+    return 0;
   };
+
+  const handleAddToCart = () => {
+    const orderItemExtras = Object.keys(selectedOptions).flatMap((optionId) =>
+      selectedOptions[optionId].map((optionItemId) => ({
+        optionItemId: optionItemId,
+        selected: true,
+      }))
+    );
+
+    const orderItem = {
+      shopId: 1, // Replace with actual shopId if necessary
+      quantity: quantity,
+      totalPrice: calculateTotalPrice(),
+      specialInstructions: specialInstructions,
+      menuId: menuId,
+      orderItemExtras: orderItemExtras, // Flattened array of selected options
+    };
+
+    // Add the order item to the store
+    addOrderItem(orderItem);
+
+    // Optionally, you can update the order details as well here
+    // updateOrderDetails({ /* details */ });
+
+    // Navigate back to the previous page
+    navigation.goBack();
+  };
+
+  if (!menuData) {
+    return <Text>Loading...</Text>; // Show loading state until the data is fetched
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white", top: 0 }}>
       <Header
-        title={"เมนูที่ 1"}
+        title={menuData.name}
         showBackButton
         onBackPress={() => navigation.goBack()}
       />
       <ScrollView style={styles.container}>
-        <Image source={{ uri: menuData.image }} style={styles.foodImage} />
+        <Image source={{ uri: menuData.picture }} style={styles.foodImage} />
         <Text style={styles.descriptionTitle}>คำอธิบาย:</Text>
         <Text style={styles.description}>{menuData.description}</Text>
 
-        {menuData.options.map((option) => (
-          <View key={option.id}>
+        {menuData.option.map((option) => (
+          <View key={option.optionId}>
             <Text style={styles.optionTitle}>{option.name}</Text>
-            {option.subOptions.map((subOption) => (
+            {option.optionItem.map((optionItem) => (
               <CustomCheckboxPrice
-                key={subOption.id}
-                label={subOption.name}
-                price={"+ " + subOption.price.toString()}
+                key={optionItem.optionItemId}
+                label={optionItem.name}
+                price={"+ " + optionItem.price.toString()}
                 checked={
-                  selectedOptions[option.id]?.includes(subOption.id) || false
+                  selectedOptions[option.optionId]?.includes(
+                    optionItem.optionItemId
+                  ) || false
                 }
-                onPress={() => handleSelectOption(option.id, subOption.id)}
+                onPress={() =>
+                  handleSelectOption(option.optionId, optionItem.optionItemId)
+                }
               />
             ))}
           </View>
@@ -122,7 +190,9 @@ const DetailMenuScreen = ({ menuId }: { menuId: string }) => {
         <Text style={styles.additionalTitle}>เพิ่มเติม:</Text>
         <TextInput
           style={styles.additionalInput}
-          placeholder="ไม่เอาเครื่องใน"
+          placeholder="รายละเอียดเพิ่มเติม"
+          value={specialInstructions}
+          onChangeText={setSpecialInstructions}
         />
       </ScrollView>
       <View style={styles.footer}>
@@ -131,18 +201,21 @@ const DetailMenuScreen = ({ menuId }: { menuId: string }) => {
             onPress={() => setQuantity(Math.max(1, quantity - 1))}
             style={styles.quantityButton}
           >
-            <Text style={styles.quantityText}>-</Text>
+            <Entypo name="circle-with-minus" size={28} color="#000" />
           </TouchableOpacity>
           <Text style={styles.quantityText}>{quantity}</Text>
           <TouchableOpacity
             onPress={() => setQuantity(quantity + 1)}
             style={styles.quantityButton}
           >
-            <Text style={styles.quantityText}>+</Text>
+            <Entypo name="circle-with-plus" size={28} color="#000" />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.addToCartButton}>
+        <TouchableOpacity
+          style={styles.addToCartButton}
+          onPress={handleAddToCart}
+        >
           <Text style={styles.addToCartText}>
             ใส่ตะกร้า ({calculateTotalPrice().toFixed(2)} บาท)
           </Text>
@@ -155,6 +228,7 @@ const DetailMenuScreen = ({ menuId }: { menuId: string }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 10,
     paddingHorizontal: 32,
     backgroundColor: "#fff",
     marginBottom: 90,
@@ -186,7 +260,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   additionalInput: {
-    height: 40,
+    backgroundColor: "#ccc",
+    height: 100,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
@@ -194,15 +269,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   quantityContainer: {
-    gap: 8,
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
   },
-  quantityButton: {
-    backgroundColor: "#ccc",
-    padding: 10,
-    borderRadius: 8,
-  },
+  quantityButton: {},
   quantityText: {
     fontSize: 18,
   },
@@ -217,17 +288,16 @@ const styles = StyleSheet.create({
     color: "white",
   },
   footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: "#fff",
     paddingTop: 0,
-    paddingBottom: 10,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    paddingBottom: 16,
+    paddingHorizontal: 32,
   },
 });
 

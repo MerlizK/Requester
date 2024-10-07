@@ -16,4 +16,3 @@ export const HeadersToken = {
 };
 
 export const APIURL = "https://ku-man-api.vimforlanie.com/";
-

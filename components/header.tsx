@@ -37,11 +37,10 @@ const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    paddingTop: 60,
+    marginTop: 32,
     width: "100%",
     paddingHorizontal: 32,
     backgroundColor: "white",
-    position: "relative",
   },
   headerContent: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,47 +8,90 @@ import {
   StyleSheet,
   Modal,
   SafeAreaView,
+  Image,
 } from "react-native";
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import axios from "axios";
+import { APIURL, HeadersToken } from "../Constants";
+import useOrderStore from "../OrderStore";
+
 type RootStackParamList = {
-  DetailMenu: { menuId: string };
+  DetailMenu: { menuId: number };
   SummaryMenu: undefined;
+  SelectMenu: { shopId: number };
 };
+
 type SelectMenuScreenProps = NativeStackNavigationProp<
   RootStackParamList,
   "DetailMenu",
   "SummaryMenu"
 >;
 
-const SelectMenuScreen = ({ shopId }: { shopId: string }) => {
+type Props = {
+  route: RouteProp<RootStackParamList, "SelectMenu">; // Route prop type
+};
+
+const SelectMenuScreen = ({ route }: Props) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [menus, setMenus] = useState([]);
+  const { order } = useOrderStore();
+  const navigation = useNavigation<SelectMenuScreenProps>();
 
-  const restaurants = [
-    { id: "1", name: "เมนู 1", status: true },
-    { id: "2", name: "เมนู 2", status: true },
-    { id: "3", name: "เมนู 3", status: false },
-    { id: "4", name: "เมนู 4", status: true },
-  ];
-  const numberOfOrders = 4;
+  const handleOrderCount = () => {
+    return order.orderItems.length;
+  };
+  const { shopId } = route.params;
 
-  const renderRestaurant = ({ item }) => (
+  const fetchMenus = async () => {
+    console.log("shopId", shopId);
+    try {
+      const response = await axios.get(`${APIURL}shop/shop-menu`, {
+        params: { shopId: shopId },
+        ...HeadersToken,
+      });
+      setMenus(response.data);
+    } catch (error) {
+      console.error("Error fetching menus:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMenus();
+  }, [shopId]);
+
+  const renderMenuItem = ({ item }) => (
     <TouchableOpacity
       style={styles.restaurantItem}
-      onPress={() => navigation.navigate("DetailMenu", { menuId: item.id })}
+      onPress={() =>
+        navigation.navigate("DetailMenu", { menuId: item.menuId.toString() })
+      }
     >
       <View style={{ flexDirection: "row" }}>
-        <View style={{ width: 48, height: 48 }}></View>
+        <View style={{ width: 48, height: 48, marginRight: 16 }}>
+          {item.picture ? (
+            <Image
+              source={{ uri: item.picture }}
+              style={{ width: 48, height: 48, borderRadius: 8 }}
+            />
+          ) : (
+            <View
+              style={{
+                width: 48,
+                height: 48,
+                backgroundColor: "#ccc",
+                borderRadius: 8,
+              }}
+            />
+          )}
+        </View>
         <View style={{ gap: 8 }}>
           <Text style={styles.restaurantName}>{item.name}</Text>
-          <TouchableOpacity>
-            <Text style={{ fontSize: 14, color: "#5685FF" }}>ดูรีวิว</Text>
-          </TouchableOpacity>
+          <Text style={styles.restaurantPrice}>ราคา: {item.price} บาท</Text>
         </View>
       </View>
-
       <Text style={[styles.restaurantStatus, !item.status && { color: "red" }]}>
         {item.status ? "เปิด" : "ปิด"}
       </Text>
@@ -58,7 +101,6 @@ const SelectMenuScreen = ({ shopId }: { shopId: string }) => {
   const handleConfirm = () => {
     setModalVisible(false);
   };
-  const navigation = useNavigation<SelectMenuScreenProps>();
 
   return (
     <SafeAreaView style={{ flex: 1, top: 0 }}>
@@ -76,21 +118,20 @@ const SelectMenuScreen = ({ shopId }: { shopId: string }) => {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={restaurants}
-          renderItem={renderRestaurant}
-          keyExtractor={(item) => item.id}
+          data={menus}
+          renderItem={renderMenuItem}
+          keyExtractor={(item) => item.menuId.toString()}
         />
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <TouchableOpacity
             style={{ justifyContent: "center", alignSelf: "center" }}
             onPress={() => navigation.navigate("SummaryMenu")}
           >
-            {numberOfOrders !== 0 && (
+            {handleOrderCount() !== 0 && (
               <View style={styles.orderContainer}>
-                <Text style={styles.orderCount}>{numberOfOrders}</Text>
+                <Text style={styles.orderCount}>{handleOrderCount()}</Text>
               </View>
             )}
-
             <Entypo name="shopping-basket" size={48} color="black" />
           </TouchableOpacity>
 
@@ -99,14 +140,14 @@ const SelectMenuScreen = ({ shopId }: { shopId: string }) => {
               <TouchableOpacity
                 style={[
                   styles.orderButton,
-                  numberOfOrders !== 0 && { backgroundColor: "#2C2C2C" },
+                  handleOrderCount() !== 0 && { backgroundColor: "#2C2C2C" },
                 ]}
               >
                 <Text style={styles.buttonText}>สั่ง</Text>
               </TouchableOpacity>
             </View>
 
-            {numberOfOrders === 0 && (
+            {handleOrderCount() === 0 && (
               <Text style={styles.footerNote}>
                 *กรุณาต้องการรออาหารโดยใส่จำนวน
               </Text>
