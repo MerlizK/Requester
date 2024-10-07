@@ -8,6 +8,7 @@ import SelectMenuScreen from "./screens/select-menu-screen";
 import SummaryMenuScreen from "./screens/summary-menu-screen";
 import DetailMenuScreen from "./screens/detail-menu-screen";
 import ConfirmOrderScreen from "./screens/cofirm-menu-screen";
+import HomeScreen from "./screens/junction-screen";
 
 const Stack = createStackNavigator();
 
@@ -29,6 +30,7 @@ export default function App() {
       >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="SelectShop" component={SelectShopScreen} />
         <Stack.Screen name="SelectMenu" component={SelectMenuScreen} />
         <Stack.Screen name="SummaryMenu" component={SummaryMenuScreen} />

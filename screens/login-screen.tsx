@@ -58,7 +58,7 @@ const LoginScreen = () => {
   //   }
   // };
   const handleLogin = () => {
-    navigation.navigate("SelectShop" as never);
+    navigation.navigate("Home" as never);
   };
   const handleRegister = () => {
     navigation.navigate("Register" as never);

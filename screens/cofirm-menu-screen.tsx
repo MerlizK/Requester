@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Modal,
   SafeAreaView,
-  Alert, // Import Alert for confirmation dialog
+  Alert,
 } from "react-native";
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
@@ -56,7 +56,7 @@ const ConfirmOrderScreen = () => {
       );
       console.log("API response:", response.data);
       clearOrder();
-      navigation.navigate("SelectShop" as never);
+      navigation.navigate("Home" as never);
     } catch (error) {
       console.error(
         "Order submission error:",
