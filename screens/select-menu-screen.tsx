@@ -9,6 +9,7 @@ import {
   Modal,
   SafeAreaView,
   Image,
+  RefreshControl,
 } from "react-native";
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
@@ -38,6 +39,7 @@ const SelectMenuScreen = ({ route }: Props) => {
   const [menus, setMenus] = useState([]);
   const { order } = useOrderStore();
   const navigation = useNavigation<SelectMenuScreenProps>();
+  const [loading, setLoading] = useState(false);
 
   const handleOrderCount = () => {
     return order.orderItems.length;
@@ -49,14 +51,16 @@ const SelectMenuScreen = ({ route }: Props) => {
     order.name.toLowerCase().includes(searchText.toLowerCase())
   );
   const fetchMenus = async () => {
-    console.log("shopId", shopId);
+    setLoading(true);
     try {
       const response = await axios.get(`${APIURL}shop/shop-menu`, {
         params: { shopId: shopId },
         ...HeadersToken,
       });
       setMenus(response.data);
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       console.error("Error fetching menus:", error);
     }
   };
@@ -134,6 +138,12 @@ const SelectMenuScreen = ({ route }: Props) => {
           data={filteredMenus}
           renderItem={renderMenuItem}
           keyExtractor={(item) => item.menuId.toString()}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading} // Show loading when refreshing
+              onRefresh={fetchMenus} // Call fetchShops to refresh the data
+            />
+          }
         />
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <TouchableOpacity

@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Modal,
   SafeAreaView,
+  RefreshControl,
 } from "react-native";
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
@@ -34,11 +35,13 @@ const SelectShopScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [restaurants, setRestaurants] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { order, updateOrderDetails } = useOrderStore();
 
   const navigation = useNavigation<SelectMenuScreenProps>();
   const fetchShops = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(`${APIURL}shop/search`, {
         params: { canteenId: 1 },
@@ -46,7 +49,9 @@ const SelectShopScreen = () => {
       });
 
       setRestaurants(response.data);
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       console.error("Error fetching shops:", error);
     }
   };
@@ -128,6 +133,9 @@ const SelectShopScreen = () => {
           data={filteredRestaurants}
           renderItem={renderRestaurant}
           keyExtractor={(item) => item.shopId.toString()}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={fetchShops} />
+          }
         />
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <TouchableOpacity
