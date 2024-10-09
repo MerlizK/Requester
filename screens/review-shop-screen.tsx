@@ -45,7 +45,7 @@ const ReviewShopScreen = ({ route }) => {
   ];
   const fetchReview = async () => {
     try {
-      const response = await axios.get(`${APIURL}requester/review`, {
+      const response = await axios.get(`${APIURL}shop/review`, {
         params: { shopId: shopId },
         ...HeadersToken,
       });
