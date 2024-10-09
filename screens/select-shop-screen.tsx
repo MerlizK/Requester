@@ -19,7 +19,7 @@ import { APIURL, HeadersToken } from "../Constants";
 import useOrderStore from "../OrderStore";
 
 type RootStackParamList = {
-  SelectMenu: { shopId: number };
+  SelectMenu: { shopId: number; shopName: string };
   ShopReviewed: { shopId: number };
   SummaryMenu: undefined;
 };
@@ -59,7 +59,10 @@ const SelectShopScreen = () => {
     <TouchableOpacity
       style={styles.restaurantItem}
       onPress={() => {
-        navigation.navigate("SelectMenu", { shopId: item.shopId });
+        navigation.navigate("SelectMenu", {
+          shopId: item.shopId,
+          shopName: item.shopName,
+        });
       }}
       disabled={!item.status}
     >
@@ -174,7 +177,8 @@ const SelectShopScreen = () => {
               <TouchableOpacity
                 style={styles.confirmButton}
                 onPress={() => {
-                  // Handle confirm logic here
+                  setModalVisible(false);
+                  navigation.navigate("Home" as never);
                 }}
               >
                 <Text style={styles.buttonText}>เลือกโรงอาหารอื่น</Text>

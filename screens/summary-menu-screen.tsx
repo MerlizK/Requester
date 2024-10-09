@@ -73,7 +73,9 @@ const SummaryMenuScreen = () => {
         onBackPress={() => navigation.goBack()}
       />
       {order.orderItems.length === 0 ? (
-        <View style={{ justifyContent: "center", alignSelf: "center" }}>
+        <View
+          style={{ justifyContent: "center", alignSelf: "center", flex: 1 }}
+        >
           <Text>รายการว่างเปล่า</Text>
         </View>
       ) : (

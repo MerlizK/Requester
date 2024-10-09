@@ -21,7 +21,7 @@ import useOrderStore from "../OrderStore";
 type RootStackParamList = {
   DetailMenu: { menuId: number };
   SummaryMenu: undefined;
-  SelectMenu: { shopId: number };
+  SelectMenu: { shopId: number; shopName: string };
 };
 
 type SelectMenuScreenProps = NativeStackNavigationProp<
@@ -42,7 +42,7 @@ const SelectMenuScreen = ({ route }: Props) => {
   const handleOrderCount = () => {
     return order.orderItems.length;
   };
-  const { shopId } = route.params;
+  const { shopId, shopName } = route.params;
   const [searchText, setSearchText] = useState("");
 
   const filteredMenus = menus.filter((order) =>
@@ -113,7 +113,7 @@ const SelectMenuScreen = ({ route }: Props) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white", top: 0 }}>
       <Header
-        title={"ร้านที่ " + shopId.toString()}
+        title={shopName}
         showBackButton
         onBackPress={() => navigation.navigate("SelectShop" as never)}
       />

@@ -19,7 +19,7 @@ import { OrderItem } from "../OrderStore";
 
 const ConfirmOrderScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState("123 ถนน ที่อยู่");
+  const [deliveryAddress, setDeliveryAddress] = useState(0);
   const [useGPS, setUseGPS] = useState(false);
   const navigation = useNavigation();
 
@@ -27,19 +27,45 @@ const ConfirmOrderScreen = () => {
   const sendOrderPayload = useOrderStore((state) => state.sendOrderPayload);
   const updateOrderDetails = useOrderStore((state) => state.updateOrderDetails);
   const clearOrder = useOrderStore((state) => state.clearOrder);
-  const handleConfirmAddress = (gps: boolean) => {
-    setUseGPS(gps);
-    setDeliveryAddress(gps ? "ตามที่อยู่บนระบบ GPS" : "123 ถนน ที่อยู่");
-    setModalVisible(false);
-  };
   const totalOrderPrice = order.orderItems.reduce(
     (acc, item) => acc + item.totalPrice,
     0
   );
 
+  const fetchAddress = async () => {
+    try {
+      const response = await axios.get(`${APIURL}requester/address`, {
+        ...HeadersToken,
+      });
+      const { defaultAddress, address } = response.data;
+      updateOrderDetails({ addressId: defaultAddress });
+
+      const defaultAddr = address.find(
+        (addr) => addr.addressId === defaultAddress
+      );
+      if (defaultAddr) {
+        setDeliveryAddress(defaultAddr.detail);
+      }
+    } catch (error) {
+      console.error("Error fetching address:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddress();
+  }, []);
+
+  useEffect(() => {
+    if (useGPS) {
+      //TODO: Get GPS location
+      updateOrderDetails({ addressId: deliveryAddress });
+    } else {
+      updateOrderDetails({ addressId: deliveryAddress });
+    }
+  }, [useGPS]);
+
   useEffect(() => {
     updateOrderDetails({
-      addressId: 2,
       transactionType: "Debit-card",
       totalPrice: totalOrderPrice,
       shippingFee: 10,
@@ -47,7 +73,7 @@ const ConfirmOrderScreen = () => {
     updateOrderDetails({
       amount: totalOrderPrice + order.shippingFee,
     });
-  }, []);
+  }, [totalOrderPrice, order.shippingFee, updateOrderDetails]);
 
   const handleConfirmOrder = async () => {
     const payload = sendOrderPayload();
@@ -189,28 +215,39 @@ const ConfirmOrderScreen = () => {
           onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalContainer}>
+            <Header
+              title="เลือกตำแหน่งจัดส่ง"
+              showBackButton={true}
+              onBackPress={() => setModalVisible(false)}
+            />
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>เลือกตำแหน่งจัดส่ง</Text>
               <TouchableOpacity
                 style={styles.modalOption}
-                onPress={() => handleConfirmAddress(true)}
+                onPress={() => {
+                  setUseGPS(true);
+                  setModalVisible(false);
+                }}
               >
-                <Entypo name="location-pin" size={24} color="black" />
-                <Text>ตามที่อยู่บนระบบ GPS</Text>
+                <Entypo name="map" size={36} color="black" />
+                <View style={{ gap: 8 }}>
+                  <Text>ตามที่อยู่บนระบบ GPS</Text>
+                  <Text style={{ color: "grey" }}>
+                    ทำการส่งไปยังที่อยู่ปัจจุบันของคุณ
+                  </Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalOption}
-                onPress={() => handleConfirmAddress(false)}
+                onPress={() => {
+                  setUseGPS(false);
+                  setModalVisible(false);
+                }}
               >
-                <Entypo name="home" size={24} color="black" />
-                <Text>ตามที่อยู่เริ่มต้น</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>ยกเลิก</Text>
+                <Entypo name="location-pin" size={36} color="black" />
+                <View style={{ gap: 8 }}>
+                  <Text>ตามที่อยู่เริ่มต้น</Text>
+                  <Text style={{ color: "grey" }}>{`${deliveryAddress}`}</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -274,15 +311,14 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "white",
   },
   modalContent: {
+    marginTop: 16,
     backgroundColor: "#fff",
-    padding: 20,
+    paddingHorizontal: 32,
     borderRadius: 10,
-    width: "80%",
+    gap: 16,
   },
   modalTitle: {
     fontSize: 18,
@@ -291,11 +327,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   modalOption: {
+    gap: 16,
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
   },
   modalCancelButton: {
     backgroundColor: "#ccc",
