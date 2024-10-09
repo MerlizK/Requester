@@ -20,13 +20,14 @@ import useOrderStore from "../OrderStore";
 
 type RootStackParamList = {
   SelectMenu: { shopId: number };
+  ShopReviewed: { shopId: number };
   SummaryMenu: undefined;
 };
 
 type SelectMenuScreenProps = NativeStackNavigationProp<
   RootStackParamList,
   "SelectMenu",
-  "SummaryMenu"
+  "ShopReviewed" | "SummaryMenu"
 >;
 
 const SelectShopScreen = () => {
@@ -70,7 +71,11 @@ const SelectShopScreen = () => {
         />
         <View style={{ gap: 8 }}>
           <Text style={styles.restaurantName}>{item.shopName}</Text>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate("ShopReviewed", { shopId: item.shopId });
+            }}
+          >
             <Text style={{ fontSize: 14, color: "#5685FF" }}>ดูรีวิว</Text>
           </TouchableOpacity>
         </View>
@@ -136,6 +141,8 @@ const SelectShopScreen = () => {
                   styles.orderButton,
                   handleOrderCount() !== 0 && { backgroundColor: "#2C2C2C" },
                 ]}
+                disabled={order.orderItems.length === 0}
+                onPress={() => navigation.navigate("ConfirmOrder" as never)}
               >
                 <Text style={styles.buttonText}>สั่ง</Text>
               </TouchableOpacity>
@@ -232,7 +239,7 @@ const styles = StyleSheet.create({
   profilePicture: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 8,
     marginRight: 10,
   },
   restaurantItem: {

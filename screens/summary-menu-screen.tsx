@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -9,43 +9,57 @@ import {
   Image,
 } from "react-native";
 import Header from "../components/header";
-import useOrderStore from "../OrderStore"; // Ensure this path is correct
+import useOrderStore from "../OrderStore";
 import { useNavigation } from "@react-navigation/native";
+import { Entypo } from "@expo/vector-icons";
 
 const SummaryMenuScreen = () => {
   const order = useOrderStore((state) => state.order);
+  const navigation = useNavigation();
 
   const handleDeleteOrderItem = (orderId) => {
     useOrderStore.getState().removeOrderItem(orderId);
   };
-  const navigation = useNavigation();
 
   const renderOrderItem = ({ item }) => {
     return (
       <View style={styles.restaurantItem}>
         <TouchableOpacity onPress={() => {}}>
           <View style={{ flexDirection: "row" }}>
-            {item?.picture && (
-              <Image
-                source={{ uri: item.picture }}
-                style={{ width: 48, height: 48 }}
-              />
-            )}
+            <View
+              style={{
+                justifyContent: "center",
+                width: 87,
+                height: 64,
+                top: 4,
+              }}
+            >
+              {item?.picture && (
+                <Image
+                  source={{ uri: item.picture }}
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    borderRadius: 8,
+                    alignSelf: "center",
+                  }}
+                />
+              )}
+            </View>
+
             <View style={{ marginLeft: 10 }}>
               <Text style={styles.restaurantName}>
                 {item?.name || "Menu not found"}
               </Text>
+              <Text style={styles.restaurantStatus}>จำนวน {item.quantity}</Text>
               <Text style={styles.restaurantStatus}>
-                จำนวน: {item.quantity}
-              </Text>
-              <Text style={styles.restaurantStatus}>
-                ราคาต่อหน่วย: {item?.price}
+                ราคา: {item.totalPrice} บาท
               </Text>
             </View>
           </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeleteOrderItem(item.orderId)}>
-          <Text style={styles.deleteButton}>Delete</Text>
+          <Entypo name="circle-with-cross" size={36} color="red" />
         </TouchableOpacity>
       </View>
     );
@@ -58,20 +72,18 @@ const SummaryMenuScreen = () => {
         showBackButton
         onBackPress={() => navigation.goBack()}
       />
-      <View style={{ padding: 32 }}>
-        {order.orderItems.length === 0 ? (
-          <View style={{ justifyContent: "center", alignSelf: "center" }}>
-            <Text>รายการว่างเปล่า</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={order.orderItems}
-            renderItem={renderOrderItem}
-            keyExtractor={(item) => item.menuId}
-            contentContainerStyle={{ flexGrow: 1 }}
-          />
-        )}
-      </View>
+      {order.orderItems.length === 0 ? (
+        <View style={{ justifyContent: "center", alignSelf: "center" }}>
+          <Text>รายการว่างเปล่า</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={order.orderItems}
+          renderItem={renderOrderItem}
+          keyExtractor={(item) => item.orderId}
+          contentContainerStyle={{ paddingHorizontal: 32, flexGrow: 1 }}
+        />
+      )}
 
       <View style={styles.footer}>
         <TouchableOpacity
@@ -106,11 +118,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   restaurantName: {
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: "bold",
   },
   restaurantStatus: {
     fontSize: 16,
-    color: "green",
   },
   orderButton: {
     width: 160,
@@ -118,7 +130,6 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
-    marginTop: 20,
   },
   deleteButton: {
     color: "red",

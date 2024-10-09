@@ -7,17 +7,20 @@ const CustomCheckboxPrice = ({
   price,
   checked,
   onPress,
+  disabled,
 }: {
   label: string;
   price: string;
   checked: boolean;
   onPress: () => void;
+  disabled?: boolean;
 }) => (
   <View style={styles.checkboxContainer}>
     <Checkbox
       status={checked ? "checked" : "unchecked"}
       onPress={onPress}
       color="#000"
+      disabled={disabled ?? false}
     />
     <View style={styles.textContainer}>
       <Text style={styles.label}>{label}</Text>

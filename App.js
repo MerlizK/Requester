@@ -9,6 +9,7 @@ import SummaryMenuScreen from "./screens/summary-menu-screen";
 import DetailMenuScreen from "./screens/detail-menu-screen";
 import ConfirmOrderScreen from "./screens/cofirm-menu-screen";
 import HomeScreen from "./screens/junction-screen";
+import ReviewShopScreen from "./screens/review-shop-screen";
 
 const Stack = createStackNavigator();
 
@@ -33,6 +34,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="SelectShop" component={SelectShopScreen} />
         <Stack.Screen name="SelectMenu" component={SelectMenuScreen} />
+        <Stack.Screen name="ShopReviewed" component={ReviewShopScreen} />
         <Stack.Screen name="SummaryMenu" component={SummaryMenuScreen} />
         <Stack.Screen name="DetailMenu" component={DetailMenuScreen} />
         <Stack.Screen name="ConfirmOrder" component={ConfirmOrderScreen} />

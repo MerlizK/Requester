@@ -62,7 +62,7 @@ const DetailMenuScreen = ({ route }: Props) => {
 
   const { menuId } = route.params;
   const numericMenuId = Number(menuId);
-  const addOrderItem = useOrderStore((state) => state.addOrderItem); // Correctly accessing the addOrderItem function
+  const addOrderItem = useOrderStore((state) => state.addOrderItem);
   const navigation = useNavigation();
   const order = useOrderStore((state) => state.order);
   const fetchMenuData = async () => {
@@ -166,7 +166,15 @@ const DetailMenuScreen = ({ route }: Props) => {
         <Image source={{ uri: menuData.picture }} style={styles.foodImage} />
         <Text style={styles.descriptionTitle}>คำอธิบาย:</Text>
         <Text style={styles.description}>{menuData.description}</Text>
-
+        <View>
+          <Text style={styles.optionTitle}>{menuData.name}</Text>
+          <CustomCheckboxPrice
+            label={"ราคาเริ่มต้น"}
+            price={menuData.price.toFixed(2) + " บาท"}
+            checked={true}
+            onPress={() => {}}
+          />
+        </View>
         {menuData.option.map((option) => (
           <View key={option.optionId}>
             <Text style={styles.optionTitle}>{option.name}</Text>
@@ -174,7 +182,7 @@ const DetailMenuScreen = ({ route }: Props) => {
               <CustomCheckboxPrice
                 key={optionItem.optionItemId}
                 label={optionItem.name}
-                price={"+ " + optionItem.price.toString()}
+                price={"+ " + optionItem.price.toFixed(2) + " บาท"}
                 checked={
                   selectedOptions[option.optionId]?.includes(
                     optionItem.optionItemId
@@ -194,6 +202,8 @@ const DetailMenuScreen = ({ route }: Props) => {
           placeholder="รายละเอียดเพิ่มเติม"
           value={specialInstructions}
           onChangeText={setSpecialInstructions}
+          multiline={true}
+          textAlignVertical="top"
         />
       </ScrollView>
       <View style={styles.footer}>
@@ -261,14 +271,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   additionalInput: {
-    backgroundColor: "#ccc",
-    height: 100,
-    borderColor: "#ccc",
+    backgroundColor: "#f0f0f0",
+    height: 120,
+    borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
+    paddingVertical: 10,
     marginBottom: 16,
   },
+
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",

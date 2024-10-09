@@ -5,7 +5,7 @@ interface OrderItemExtra {
   selected: boolean;
 }
 
-interface OrderItem {
+export interface OrderItem {
   shopId: number;
   quantity: number;
   totalPrice: number;

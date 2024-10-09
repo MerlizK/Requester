@@ -1,133 +1,177 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   FlatList,
   TouchableOpacity,
   StyleSheet,
   Modal,
   SafeAreaView,
+  Image,
+  ScrollView,
 } from "react-native";
 import Header from "../components/header";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import { APIURL, HeadersToken } from "../Constants";
 
-const ReviewShopScreen = ({ shopId }: { shopId: string }) => {
+const ReviewShopScreen = ({ route }) => {
+  const { shopId } = route.params;
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [reviews, setReviews] = useState([]);
 
-  const restaurants = [
+  const responseMock = [
     {
-      id: "1",
-      name: "กุ๊กไก่ ไฉไล",
-      description: "เผ็ดมากๆๆๆๆๆๆๆๆๆๆ",
-      score: "3",
+      reviewId: 1,
+      rating: 3,
+      comment: "CleanAndGood",
+      requester: {
+        username: "Requester1",
+        profilePicture: "",
+      },
     },
     {
-      id: "2",
-      name: "ขอเถอะ ขอนะ",
-      description: "กำลังดี ไม่หวานเกินไป",
-      score: "4",
-    },
-    {
-      id: "3",
-      name: "พรี่เก่ง พลังช้าง",
-      description:
-        "บางเมนูก็ก็ลังดีบางเมนูก็ไม่ดีแต่โดยแล้วรสชาติโดนใจแต่อาจจะขาด ๆ เกิน ๆ ไปบ้าง",
-      score: "5",
+      reviewId: 2,
+      rating: 5,
+      comment:
+        "EieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieieEieieieieiieieieeiieieieieiieieieiieieieieieieiieieie",
+      requester: {
+        username: "Requester2",
+        profilePicture: "",
+      },
     },
   ];
+  const fetchReview = async () => {
+    try {
+      const response = await axios.get(`${APIURL}requester/review`, {
+        params: { shopId: shopId },
+        ...HeadersToken,
+      });
+      // setReviews(response.data);
+      setReviews(responseMock);
+    } catch (error) {
+      console.error("Error fetching menus:", error);
+    }
+  };
 
-  const renderRestaurant = ({ item }) => (
-    <TouchableOpacity style={styles.restaurantItem} onPress={() => {}}>
-      <View style={{ flexDirection: "row" }}>
-        <View style={{ width: 48, height: 48 }}></View>
+  useEffect(() => {
+    fetchReview();
+  }, []);
+
+  const renderReviewed = ({ item }) => (
+    <TouchableOpacity
+      style={styles.restaurantItem}
+      onPress={() => {
+        setSelectedReview(item);
+        setModalVisible(true);
+      }}
+    >
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <View style={{ width: 52, height: 52 }}>
+          {item.requester.profilePicture ? (
+            <Image
+              source={{ uri: item.requester.profilePicture }}
+              style={{
+                height: "100%",
+                width: "100%",
+                borderRadius: 8,
+                alignSelf: "center",
+              }}
+            />
+          ) : null}
+        </View>
+        <Entypo name="star-outlined" size={20} color="black" />
         <View style={{ gap: 8 }}>
-          <Text style={styles.restaurantName}>{item.name}</Text>
-          <TouchableOpacity>
-            <Text style={{ fontSize: 14, color: "#5685FF" }}>ดูรีวิว</Text>
-          </TouchableOpacity>
+          <Text style={styles.restaurantName}>{item.rating}</Text>
+
+          <Text
+            style={{ fontSize: 14, color: "grey" }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.comment}
+          </Text>
         </View>
       </View>
-
-      <Text style={[styles.restaurantStatus, !item.status && { color: "red" }]}>
-        {item.status ? "เปิด" : "ปิด"}
-      </Text>
     </TouchableOpacity>
   );
 
-  const handleConfirm = () => {
+  const handleClose = () => {
     setModalVisible(false);
   };
+
   const navigation = useNavigation();
 
   return (
-    <SafeAreaView style={{ flex: 1, top: 0 }}>
+    <SafeAreaView style={{ flex: 1, top: 0, backgroundColor: "white" }}>
       <Header
-        title={"รายการสั่งซื้อ"}
+        title={"รีวิว: ร้านที่ " + shopId.toString()}
         showBackButton
         onBackPress={() => navigation.goBack()}
       />
 
       <View style={styles.container}>
-        {restaurants ? (
-          <FlatList
-            data={restaurants}
-            renderItem={renderRestaurant}
-            keyExtractor={(item) => item.id}
-          />
-        ) : (
-          <Text>รายการว่างเปล่า</Text>
-        )}
-        <View style={{ flexDirection: "row", justifyContent: "center" }}>
-          <View>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-              <TouchableOpacity
-                style={[
-                  styles.orderButton,
-                  numberOfOrders !== 0 && { backgroundColor: "#2C2C2C" },
-                ]}
-              >
-                <Text style={styles.buttonText}>สั่ง</Text>
-              </TouchableOpacity>
-            </View>
-
-            {numberOfOrders === 0 && (
-              <Text style={styles.footerNote}>
-                *กรุณาต้องการรออาหารโดยใส่จำนวน
-              </Text>
-            )}
-          </View>
-        </View>
+        <FlatList
+          data={reviews}
+          renderItem={renderReviewed}
+          keyExtractor={(item) => item.reviewId.toString()}
+        />
 
         <Modal
           animationType="slide"
-          transparent={true}
+          transparent={false}
           visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(!modalVisible);
-          }}
+          onRequestClose={handleClose}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Entypo name="warning" size={64} color="#E6273E" />
-              <Text style={styles.modalTitle}>ต้องการเลือกโรงอาหารอื่น?</Text>
-              <Text style={styles.modalMessage}>
-                หากคุณเลือกโรงอาหารใหม่ ข้อมูลที่สั่งไว้จะถูกล้าง
-              </Text>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleConfirm}
-              >
-                <Text style={styles.buttonText}>เลือกโรงอาหารอื่น</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>ยกเลิก</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.fullScreenModal}>
+            <Header
+              title="รายละเอียดรีวิว"
+              showBackButton={true}
+              onBackPress={handleClose}
+            />
+            <ScrollView contentContainerStyle={styles.modalContent}>
+              <View style={styles.profileContainer}>
+                <View style={{ flexDirection: "row", gap: 16 }}>
+                  {selectedReview?.requester.profilePicture ? (
+                    <Image
+                      source={{ uri: selectedReview.requester.profilePicture }}
+                      style={styles.profilePic}
+                    />
+                  ) : (
+                    <View style={styles.placeholderPic} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>
+                      {selectedReview?.requester.username}
+                    </Text>
+                    <View style={styles.ratingContainer}>
+                      {Array.from({ length: 5 }, (_, index) => {
+                        return (
+                          <Entypo
+                            key={index}
+                            name={
+                              index < selectedReview?.rating
+                                ? "star"
+                                : "star-outlined"
+                            }
+                            size={26}
+                            color={
+                              index < selectedReview?.rating ? "black" : "gray"
+                            }
+                          />
+                        );
+                      })}
+                    </View>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.commentContainer}>
+                <Text style={styles.username}>รีวิว</Text>
+                <Text style={styles.comment}>{selectedReview?.comment}</Text>
+              </View>
+            </ScrollView>
           </View>
         </Modal>
       </View>
@@ -141,112 +185,58 @@ const styles = StyleSheet.create({
     padding: 32,
     backgroundColor: "#fff",
   },
-  header: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  searchContainer: {
-    position: "relative",
-    marginBottom: 20,
-  },
-  searchInput: {
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingRight: 40,
-  },
-  searchIcon: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-  },
-  orderContainer: {
-    borderRadius: 16,
-    width: 24,
-    height: 24,
-    position: "absolute",
-    top: 0,
-    right: 0,
-    fontSize: 16,
-    backgroundColor: "green",
-    zIndex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  orderCount: {
-    color: "white",
-  },
   restaurantItem: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     paddingVertical: 10,
+    alignItems: "center",
   },
   restaurantName: {
     fontSize: 18,
   },
-  restaurantStatus: {
-    fontSize: 16,
-    color: "green",
+  fullScreenModal: {
+    flex: 1,
+    backgroundColor: "white",
   },
-  orderButton: {
-    right: 0,
-    width: 160,
-    backgroundColor: "#ccc",
-    padding: 15,
-    borderRadius: 8,
+  modalContent: {
+    paddingHorizontal: 32,
+    alignItems: "center",
+  },
+  profileContainer: {
     alignItems: "center",
     marginTop: 20,
   },
-  buttonText: {
-    fontSize: 18,
-    color: "white",
+  profilePic: {
+    width: 69,
+    height: 69,
+    borderRadius: 50,
+    marginBottom: 10,
   },
-  footerNote: {
-    marginTop: 10,
-    textAlign: "center",
-    fontSize: 14,
-    color: "red",
+  placeholderPic: {
+    width: 69,
+    height: 69,
+    borderRadius: 50,
+    backgroundColor: "#ccc",
+    marginBottom: 10,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "80%",
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  modalTitle: {
+  username: {
     fontSize: 18,
     fontWeight: "bold",
+    marginBottom: 5,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
-  modalMessage: {
+  comment: {
     fontSize: 16,
-    textAlign: "center",
-    marginBottom: 20,
+    color: "#555",
+    marginTop: 16,
   },
-  confirmButton: {
-    backgroundColor: "#f00",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
+  commentContainer: {
+    marginTop: 24,
     width: "100%",
-    marginBottom: 10,
-  },
-  cancelButton: {
-    backgroundColor: "#ccc",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    width: "100%",
+    justifyContent: "flex-start",
   },
 });
 

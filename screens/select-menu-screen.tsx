@@ -35,7 +35,6 @@ type Props = {
 };
 
 const SelectMenuScreen = ({ route }: Props) => {
-  const [modalVisible, setModalVisible] = useState(false);
   const [menus, setMenus] = useState([]);
   const { order } = useOrderStore();
   const navigation = useNavigation<SelectMenuScreenProps>();
@@ -44,7 +43,11 @@ const SelectMenuScreen = ({ route }: Props) => {
     return order.orderItems.length;
   };
   const { shopId } = route.params;
+  const [searchText, setSearchText] = useState("");
 
+  const filteredMenus = menus.filter((order) =>
+    order.name.toLowerCase().includes(searchText.toLowerCase())
+  );
   const fetchMenus = async () => {
     console.log("shopId", shopId);
     try {
@@ -71,7 +74,14 @@ const SelectMenuScreen = ({ route }: Props) => {
       disabled={!item.status}
     >
       <View style={{ flexDirection: "row" }}>
-        <View style={{ width: 48, height: 48, marginRight: 16 }}>
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            marginRight: 16,
+            alignSelf: "center",
+          }}
+        >
           {item.picture ? (
             <Image
               source={{ uri: item.picture }}
@@ -100,27 +110,28 @@ const SelectMenuScreen = ({ route }: Props) => {
     </TouchableOpacity>
   );
 
-  const handleConfirm = () => {
-    setModalVisible(false);
-  };
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white", top: 0 }}>
       <Header
-        title={"ชื่อร้าน"}
+        title={"ร้านที่ " + shopId.toString()}
         showBackButton
         onBackPress={() => navigation.navigate("SelectShop" as never)}
       />
       <View style={styles.container}>
         <Text style={styles.header}>ค้นหาเมนู</Text>
         <View style={styles.searchContainer}>
-          <TextInput style={styles.searchInput} placeholder="ค้นหาร้านอาหาร" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="ค้นหาร้านอาหาร"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
           <TouchableOpacity style={styles.searchIcon}>
             <Entypo name="magnifying-glass" size={20} color="#888" />
           </TouchableOpacity>
         </View>
         <FlatList
-          data={menus}
+          data={filteredMenus}
           renderItem={renderMenuItem}
           keyExtractor={(item) => item.menuId.toString()}
         />
@@ -144,6 +155,8 @@ const SelectMenuScreen = ({ route }: Props) => {
                   styles.orderButton,
                   handleOrderCount() !== 0 && { backgroundColor: "#2C2C2C" },
                 ]}
+                disabled={order.orderItems.length === 0}
+                onPress={() => navigation.navigate("ConfirmOrder" as never)}
               >
                 <Text style={styles.buttonText}>สั่ง</Text>
               </TouchableOpacity>
@@ -156,37 +169,6 @@ const SelectMenuScreen = ({ route }: Props) => {
             )}
           </View>
         </View>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(!modalVisible);
-          }}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Entypo name="warning" size={64} color="#E6273E" />
-              <Text style={styles.modalTitle}>ต้องการเลือกโรงอาหารอื่น?</Text>
-              <Text style={styles.modalMessage}>
-                หากคุณเลือกโรงอาหารใหม่ ข้อมูลที่สั่งไว้จะถูกล้าง
-              </Text>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleConfirm}
-              >
-                <Text style={styles.buttonText}>เลือกโรงอาหารอื่น</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>ยกเลิก</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </View>
     </SafeAreaView>
   );
