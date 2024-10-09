@@ -67,11 +67,17 @@ const SelectShopScreen = () => {
       disabled={!item.status}
     >
       <View style={{ flexDirection: "row" }}>
-        <Image
-          source={{ uri: `${APIURL}${item.profilePicture}` }}
-          style={styles.profilePicture}
-          resizeMode="cover"
-        />
+        <View style={styles.profilePicture}>
+          {item.profilePicture ? (
+            <Image
+              source={{ uri: `${APIURL}${item.profilePicture}` }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={{ backgroundColor: "red" }}></View>
+          )}
+        </View>
+
         <View style={{ gap: 8 }}>
           <Text style={styles.restaurantName}>{item.shopName}</Text>
           <TouchableOpacity
@@ -241,6 +247,7 @@ const styles = StyleSheet.create({
     color: "white",
   },
   profilePicture: {
+    marginTop: 5,
     width: 48,
     height: 48,
     borderRadius: 8,
