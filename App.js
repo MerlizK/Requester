@@ -8,7 +8,7 @@ import SelectMenuScreen from "./screens/select-menu-screen";
 import SummaryMenuScreen from "./screens/summary-menu-screen";
 import DetailMenuScreen from "./screens/detail-menu-screen";
 import ConfirmOrderScreen from "./screens/cofirm-menu-screen";
-import HomeScreen from "./screens/junction-screen";
+import HomeScreen from "./screens/home-screen";
 import ReviewShopScreen from "./screens/review-shop-screen";
 
 const Stack = createStackNavigator();
