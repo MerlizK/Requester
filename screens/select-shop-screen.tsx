@@ -75,12 +75,11 @@ const SelectShopScreen = () => {
         <View style={styles.profilePicture}>
           {item.profilePicture ? (
             <Image
-              source={{ uri: `${APIURL}${item.profilePicture}` }}
+              source={{ uri: `data:image/jpeg;base64,${item.profilePicture}` }}
               resizeMode="cover"
+              style={{ width: "100%", height: "100%", borderRadius: 8 }}
             />
-          ) : (
-            <View style={{ backgroundColor: "red" }}></View>
-          )}
+          ) : null}
         </View>
 
         <View style={{ gap: 8 }}>
