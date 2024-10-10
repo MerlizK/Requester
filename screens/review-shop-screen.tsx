@@ -45,12 +45,13 @@ const ReviewShopScreen = ({ route }) => {
   ];
   const fetchReview = async () => {
     try {
-      const response = await axios.get(`${APIURL}shop/review`, {
+      const response = await axios.get(`${APIURL}requester/review`, {
         params: { shopId: shopId },
         ...HeadersToken,
       });
-      // setReviews(response.data);
-      setReviews(responseMock);
+      console.log(response.data);
+      setReviews(response.data);
+      // setReviews(responseMock);
     } catch (error) {
       console.error("Error fetching menus:", error);
     }
@@ -70,9 +71,9 @@ const ReviewShopScreen = ({ route }) => {
     >
       <View style={{ flexDirection: "row", gap: 8 }}>
         <View style={{ width: 52, height: 52 }}>
-          {item.requester.profilePicture ? (
+          {item.profilePicture ? (
             <Image
-              source={{ uri: item.requester.profilePicture }}
+              source={{ uri: item.profilePicture }}
               style={{
                 height: "100%",
                 width: "100%",
@@ -134,9 +135,9 @@ const ReviewShopScreen = ({ route }) => {
             <ScrollView contentContainerStyle={styles.modalContent}>
               <View style={styles.profileContainer}>
                 <View style={{ flexDirection: "row", gap: 16 }}>
-                  {selectedReview?.requester.profilePicture ? (
+                  {selectedReview?.profilePicture ? (
                     <Image
-                      source={{ uri: selectedReview.requester.profilePicture }}
+                      source={{ uri: selectedReview.profilePicture }}
                       style={styles.profilePic}
                     />
                   ) : (
@@ -144,7 +145,7 @@ const ReviewShopScreen = ({ route }) => {
                   )}
                   <View style={{ flex: 1 }}>
                     <Text style={styles.username}>
-                      {selectedReview?.requester.username}
+                      {selectedReview?.username}
                     </Text>
                     <View style={styles.ratingContainer}>
                       {Array.from({ length: 5 }, (_, index) => {
